@@ -85,10 +85,12 @@ function herosProbe() {
       }
     }
     try {
-      var btns = Array.prototype.slice.call(document.querySelectorAll('button, [role="button"]'));
+      var scopeEl2 = document.querySelector('ytmusic-player-bar') || document.querySelector('ytmusic-player') || document.querySelector('#player-bar') || document.querySelector('#player') || document;
+      var btns = Array.prototype.slice.call(scopeEl2.querySelectorAll('button, [role="button"]'));
+      if (!btns.length && scopeEl2 !== document) btns = Array.prototype.slice.call(document.querySelectorAll('button, [role="button"]'));
       var lab = function (b) { var a = b.getAttribute ? (b.getAttribute('aria-label') || b.getAttribute('title') || '') : ''; return (a || b.title || '').trim(); };
       var find = function (re) { for (var k = 0; k < btns.length; k++) { if (re.test(lab(btns[k]))) return btns[k]; } return null; };
-      out.hasNext = !!find(/^next/i); out.hasPrev = !!find(/^prev/i);
+      out.hasNext = !!find(/^next(\s*\(.*\))?$/i); out.hasPrev = !!find(/^prev(ious)?(\s*\(.*\))?$/i);
       var bSh = find(/^shuffle/i);
       if (bSh) out.shuffle = (bSh.getAttribute('aria-pressed') === 'true') ? 'on' : 'off';
       var bRp = find(/^repeat/i);
@@ -114,29 +116,36 @@ function herosAct(action, value) {
     for (var i = 0; i < els.length; i++) { if (els[i].duration > 0) return els[i]; }
     return els[0] || null;
   }
+  function scopeEl() {
+    return document.querySelector('ytmusic-player-bar') || document.querySelector('ytmusic-player') || document.querySelector('#player-bar') || document.querySelector('#player') || document.querySelector('[data-testid="player"]') || document;
+  }
   function clickBtn(re) {
-    var btns = Array.prototype.slice.call(document.querySelectorAll('button, [role="button"]'));
-    for (var i = 0; i < btns.length; i++) {
-      var b = btns[i];
-      var l = ((b.getAttribute && (b.getAttribute('aria-label') || b.getAttribute('title'))) || '').trim();
-      if (re.test(l)) { b.click(); return true; }
+    var roots = [scopeEl(), document];
+    for (var r = 0; r < roots.length; r++) {
+      var btns = Array.prototype.slice.call(roots[r].querySelectorAll('button, [role="button"]'));
+      for (var i = 0; i < btns.length; i++) {
+        var b = btns[i];
+        var l = ((b.getAttribute && (b.getAttribute('aria-label') || b.getAttribute('title'))) || '').trim();
+        if (re.test(l)) { b.click(); return true; }
+      }
     }
     return false;
   }
   try {
     var m = media();
     if (action === 'toggle') {
-      if (clickBtn(/^(pause|play)(\s|$)/i)) return true;
-      if (m) { if (m.paused) { try { m.play(); } catch (e) {} } else { m.pause(); } return true; }
+      if (m && !m.paused && !m.ended) { m.pause(); return true; }
+      if (clickBtn(/^(play|replay)(\s*\(.*\))?$/i)) return true;
+      if (m) { try { m.play(); } catch (e) {} return true; }
       return false;
     }
     if (action === 'pause') { if (m && !m.paused) m.pause(); return true; }
-    if (action === 'next') return clickBtn(/^next/i);
-    if (action === 'prev') return clickBtn(/^prev/i);
+    if (action === 'next') return clickBtn(/^next(\s*\(.*\))?$/i);
+    if (action === 'prev') return clickBtn(/^prev(ious)?(\s*\(.*\))?$/i);
     if (action === 'seek' && m && isFinite(m.duration)) { m.currentTime = Math.max(0, Math.min(m.duration - 0.25, value)); return true; }
     if (action === 'volume' && m) { m.volume = Math.max(0, Math.min(1, value)); m.muted = false; return true; }
     if (action === 'rate' && m) { try { m.playbackRate = value; } catch (e) {} return true; }
-    if (action === 'shuffle') return clickBtn(/^shuffle/i);
+    if (action === 'shuffle') return clickBtn(/^shuffle(\s*\(.*\))?$/i);
     if (action === 'repeat') return clickBtn(/^repeat/i);
     if (action === 'like') return clickBtn(/thumbs?\s*up|^like$/i);
     if (action === 'dislike') return clickBtn(/thumbs?\s*down|^dislike$/i);

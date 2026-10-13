@@ -9,7 +9,7 @@
 
 <br/>
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](./heros-player-extension/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.1.1-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](./heros-player-extension/manifest.json)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green?style=for-the-badge)](https://developer.chrome.com/docs/extensions/mv3/)
 [![Panel Only](https://img.shields.io/badge/panel-side_panel_only-8A2BE2?style=for-the-badge)](./heros-player-extension/sidepanel.html)
 [![100% Local](https://img.shields.io/badge/privacy-100%25%20local-success?style=for-the-badge&logo=shield&logoColor=white)](#privacy-and-security)

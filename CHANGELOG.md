@@ -4,6 +4,17 @@ All notable changes to Heros Player. Versions follow SemVer. The manifest
 version, the top entry here, and the release tag must always agree (CI fails
 if they do not).
 
+## [1.1.1] - 2026-10-13
+
+### Fixed
+- Pause no longer switches songs: the toggle now pauses the media element
+  directly instead of clicking the first Play/Pause-labeled button on the
+  page (which could be a playlist "Play" button starting another song).
+- All remote button clicks are scoped to the player bar first
+  (`ytmusic-player-bar`, `#player`, …) with tight exact-label matching, so
+  Play / Next can never hit shelf or card buttons ("Play next", "Play all").
+  Document-wide search is only a fallback.
+
 ## [1.1.0] - 2026-10-13
 
 ### Changed (the big refocus)

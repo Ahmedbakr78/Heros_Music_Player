@@ -1,0 +1,24 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Zip the extension
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          zip -r "heros-player-v${VER}.zip" heros-player-extension -x "*.DS_Store*"
+          ls -la "heros-player-v${VER}.zip"
+      - name: Release notes file
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          test -f "RELEASE_v${VER}.md" && echo "notes found" || echo "# Heros Player ${GITHUB_REF_NAME}" > "RELEASE_v${VER}.md"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: heros-player-v*.zip

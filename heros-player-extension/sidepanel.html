@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<meta name="theme-color" content="#0f1115">
+<link rel="icon" type="image/png" href="icons/icon32.png">
+<title>Heros Player — YouTube Music Remote</title>
+<style>
+/* ==========================================================================
+   HEROS DESIGN SYSTEM — copied 1:1 from Heros PDF (tokens, radii, shadows)
+   Topbar floating card + pill tabs + floating cards + toasts + modal.
+   ========================================================================== */
+:root{
+  --r-lg:20px; --r-md:14px; --r-sm:11px; --r-xs:7px;
+  --side-r:26px; --pill:999px;
+  --tb-h:54px; --sb-h:30px;
+  --pad:24px;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+html[data-theme="light"]{
+  --bg:#e9ecf1; --bg-2:#f4f6f9;
+  --surface:#ffffff; --surface-2:#f3f5f8; --surface-3:#e8ebf0; --surface-hover:#eceff4;
+  --border:#dde2e9; --border-2:#c8cfd9;
+  --text:#14181f; --text-2:#4a5568; --muted:#7b8697;
+  --accent:#2563eb; --accent-h:#1d4ed8;
+  --accent-soft:rgba(37,99,235,.10); --accent-ring:rgba(37,99,235,.28);
+  --on-accent:#ffffff;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.07);
+  --shadow:0 1px 2px rgba(16,24,40,.06), 0 10px 28px -10px rgba(16,24,40,.22);
+  --shadow-lg:0 24px 64px -16px rgba(16,24,40,.32), 0 2px 6px rgba(16,24,40,.08);
+  --viewer-bg:#dfe3ea;
+  --danger:#dc2626; --ok:#16a34a;
+}
+html[data-theme="dark"]{
+  --bg:#0e1014; --bg-2:#13161b;
+  --surface:#191d24; --surface-2:#21262e; --surface-3:#2a3038; --surface-hover:#252b34;
+  --border:#2a303a; --border-2:#39414d;
+  --text:#e7eaf0; --text-2:#b0b9c6; --muted:#79839a;
+  --accent:#4c8dff; --accent-h:#6ba0ff;
+  --accent-soft:rgba(76,141,255,.15); --accent-ring:rgba(76,141,255,.4);
+  --on-accent:#ffffff;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -10px rgba(0,0,0,.7);
+  --shadow-lg:0 28px 70px -18px rgba(0,0,0,.85), 0 2px 8px rgba(0,0,0,.5);
+  --viewer-bg:#0a0c0f;
+  --danger:#ef4444; --ok:#22c55e;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--font);font-size:14px;color:var(--text);background:var(--bg);overflow:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body.boot *{animation:none !important;transition:none !important}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
+a{color:var(--accent);text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-xs)}
+[hidden]{display:none !important}
+/* Scrollbars hidden app-wide (Heros rule) */
+*{scrollbar-width:none !important;-ms-overflow-style:none !important}
+*::-webkit-scrollbar{width:0 !important;height:0 !important;display:none !important}
+input[type=range]{-webkit-appearance:none;appearance:none;height:22px;background:transparent;cursor:pointer;flex:1;min-width:60px}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:var(--surface-3);border:1px solid var(--border)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);margin-top:-6px}
+input[type=range]::-moz-range-track{height:8px;border-radius:99px;background:var(--surface-3);border:1px solid var(--border)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid #fff}
+input[type=color]{border-radius:12px;border:1px solid var(--border);padding:2px;background:var(--surface-2);width:38px;height:30px}
+.ic{width:19px;height:19px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;pointer-events:none}
+.ic-sm{width:15px;height:15px}.ic-lg{width:22px;height:22px}
+/* ---------- App shell ---------- */
+#app{display:flex;flex-direction:column;height:100dvh;height:100vh;background:var(--bg)}
+.topbar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:8px 12px;min-height:var(--tb-h);background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);margin:12px 12px 0;position:relative;z-index:40}
+.tb-group{display:flex;align-items:center;gap:3px}
+.brand{display:flex;align-items:center;gap:8px;padding:0 6px 0 2px;user-select:none}
+.brand-logo{width:30px;height:30px;border-radius:10px;flex:0 0 auto;object-fit:cover;box-shadow:var(--shadow-sm)}
+.brand-text{font-size:14.5px;font-weight:600;letter-spacing:-.2px;white-space:nowrap}
+.brand-text b{font-weight:800;color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 12px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid transparent;color:var(--text);font-size:13px;font-weight:500;white-space:nowrap;transition:background .15s var(--ease)}
+.btn:hover:not(:disabled){background:var(--surface-3)}
+.btn:disabled{opacity:.34;cursor:not-allowed}
+.btn.accent{background:var(--accent);color:var(--on-accent);font-weight:600;box-shadow:var(--shadow-sm)}
+.btn.accent:hover{background:var(--accent-h)}
+.btn.ghost{background:transparent;border-color:var(--border)}
+.ibtn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--r-md);color:var(--text-2);transition:background .15s,color .15s;flex:0 0 auto;-webkit-tap-highlight-color:transparent}
+.ibtn:hover:not(:disabled){background:var(--surface-2);color:var(--text)}
+.ibtn:disabled{opacity:.3;cursor:not-allowed}
+.ibtn.on{background:var(--accent-soft);color:var(--accent)}
+.ibtn.big{width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;box-shadow:var(--shadow)}
+.ibtn.big:hover{background:var(--accent-h);color:#fff}
+/* ---------- Now-playing hero card ---------- */
+.hero{margin:10px 12px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:12px;display:flex;gap:12px;align-items:center;position:relative;overflow:hidden}
+.cover{width:76px;height:76px;border-radius:16px;flex:0 0 auto;background:linear-gradient(135deg,var(--accent),#8A2BE2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;font-weight:800;overflow:hidden;box-shadow:var(--shadow-sm);position:relative}
+.cover img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-meta{flex:1;min-width:0}
+.hero-title{font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
+.hero-artist{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.hero-badges{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:var(--pill);background:var(--surface-2);border:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text-2)}
+.chip.live{background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.4);color:var(--ok)}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+/* ---------- Pill tab bar (Heros) ---------- */
+.side-tabs{display:flex;gap:5px;padding:6px;margin:10px 12px 0;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--pill);overflow-x:auto;flex:0 0 auto}
+.side-tab{flex:1 0 62px;min-width:62px;height:50px;border-radius:var(--pill);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.3px;border:1px solid transparent}
+.side-tab:hover{background:var(--surface-3);color:var(--text-2)}
+.side-tab.active{background:var(--surface);color:var(--accent);box-shadow:var(--shadow-sm);border-color:var(--border)}
+.side-tab .ic{width:18px;height:18px}
+/* ---------- Main panes ---------- */
+.main{flex:1;display:flex;min-height:0;position:relative;margin:10px 12px 0}
+.card{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--side-r);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative}
+.side-body{flex:1;min-height:0;position:relative;overflow:hidden}
+.side-pane{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:14px 14px 18px;display:none}
+.side-pane.active{display:block}
+.side-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-2px 0 10px}
+.side-title{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--r-sm);background:var(--surface-2);margin-bottom:7px;border:1px solid transparent}
+.row:hover{border-color:var(--border)}
+.row.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}
+.row .t{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .d{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .grow{flex:1;min-width:0}
+.fav{width:24px;height:24px;border-radius:8px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--accent),#8A2BE2);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px}
+.fav img{width:100%;height:100%;object-fit:cover}
+.tabdot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);flex:0 0 auto;animation:pulse 1.4s infinite}
+.tabdot.muted{background:var(--danger);box-shadow:none;animation:none}
+.tabdot.idle{background:var(--muted);box-shadow:none;animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--surface-2);border:1px solid var(--border);border-radius:18px;padding:12px;text-align:center}
+.stat b{font-size:19px;display:block;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--muted)}
+.sitebtn{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid transparent;font-size:13px;font-weight:600;flex:1 1 45%;min-width:130px}
+.sitebtn:hover{border-color:var(--accent)}
+select,input[type=text],input[type=number]{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);height:36px;padding:0 10px;font-size:13px;outline:none;max-width:100%}
+select:focus,input:focus{border-color:var(--accent)}
+.sw{position:relative;width:38px;height:22px;flex:0 0 auto;cursor:pointer}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.tr{position:absolute;inset:0;border-radius:99px;background:var(--surface-3);border:1px solid var(--border);transition:background .15s}
+.tr::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.sw input:checked + .tr{background:var(--accent)}
+.sw input:checked + .tr::after{transform:translateX(16px)}
+/* ---------- Player bar (floating card = the remote) ---------- */
+.playerbar{margin:10px 12px 0;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:10px 12px 12px;position:relative;z-index:30}
+.seek-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ctrl-row{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:6px}
+.vol-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11px;color:var(--muted)}
+.vol-row .ic{width:16px;height:16px}
+/* ---------- Statusbar ---------- */
+.statusbar{margin:10px 12px 12px;background:var(--surface);border:1px solid var(--border);border-radius:14px 14px 20px 20px;padding:6px 12px;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-sm)}
+.statusbar .grow{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ---------- Overlays: progress, toasts, modal ---------- */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--accent);z-index:99;transition:width .2s;border-radius:0 99px 99px 0}
+#toasts{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:8px;z-index:90;max-width:min(340px,calc(100vw - 24px))}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);padding:10px 12px;font-size:13px;display:flex;gap:8px;align-items:center;animation:tin .2s var(--ease)}
+@keyframes tin{from{transform:translateY(8px);opacity:0}}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:80;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow-lg);max-width:420px;width:100%;max-height:86vh;overflow:auto;padding:18px}
+.modal h3{margin:0 0 10px;font-size:15px}
+.menu{position:fixed;z-index:95;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);padding:6px;min-width:210px}
+.menu button{display:flex;align-items:center;gap:9px;width:100%;padding:9px 10px;border-radius:10px;font-size:13px;color:var(--text)}
+.menu button:hover{background:var(--surface-2)}
+.kbd{font-family:var(--mono);font-size:11px;background:var(--surface-3);border:1px solid var(--border-2);border-bottom-width:2px;border-radius:6px;padding:1px 6px}
+.empty{text-align:center;padding:28px 16px;color:var(--muted)}
+.empty .big-ic{width:52px;height:52px;border-radius:18px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body class="boot">
+<div id="progress"></div>
+<div id="app">
+  <!-- Topbar floating card (Heros) -->
+  <div class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="icons/logo.png" alt="Heros Player logo">
+      <span class="brand-text"><b>Heros</b> Player</span>
+    </div>
+    <div class="tb-group" style="margin-left:auto">
+      <button class="ibtn" id="btnLaunch" title="Open YouTube Music" aria-label="Open YouTube Music">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="ibtn" id="btnTheme" title="Dark / Light (instant)" aria-label="Toggle theme">
+        <svg class="ic" viewBox="0 0 24 24" id="themeIcon"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+      </button>
+      <button class="ibtn" id="btnMenu" title="Menu" aria-label="Menu">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Now-playing hero = live remote readout -->
+  <div class="hero">
+    <div class="cover" id="cover"><span id="coverLetter">H</span></div>
+    <div class="hero-meta">
+      <div class="hero-title" id="npTitle">Nothing detected</div>
+      <div class="hero-artist" id="npArtist">Open YouTube Music and press play</div>
+      <div class="hero-badges">
+        <span class="chip" id="chipSrc">No source</span>
+        <span class="chip live" id="chipTabs" hidden><span class="dot"></span><span id="chipTabsN">0 sounding</span></span>
+        <span class="chip" id="chipState" hidden></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pill tabs -->
+  <div class="side-tabs" role="tablist">
+    <button class="side-tab active" data-pane="control" role="tab"><svg class="ic" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Control</button>
+    <button class="side-tab" data-pane="tabs" role="tab"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2"/></svg>Tabs</button>
+    <button class="side-tab" data-pane="songs" role="tab"><svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Songs</button>
+    <button class="side-tab" data-pane="tools" role="tab"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.07-.4.1-.8.1-1.2z"/></svg>Tools</button>
+  </div>
+
+  <!-- Main card -->
+  <div class="main">
+    <div class="card">
+      <div class="side-body">
+        <!-- CONTROL -->
+        <div class="side-pane active" id="pane-control">
+          <div class="side-head"><span class="side-title">Controlling now</span>
+            <button class="btn ghost" id="btnGoto" style="height:30px;font-size:12px">Go to tab</button>
+          </div>
+          <div id="targetCard"></div>
+          <div class="row"><div class="grow"><div class="t">Follow what is playing</div><div class="d">Auto-switch to the sounding tab</div></div><label class="sw"><input type="checkbox" id="followSw" checked><span class="tr"></span></label></div>
+          <div class="side-title" style="margin:14px 0 8px">Quick launch</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="sitebtn" data-site="https://music.youtube.com">YouTube Music</button>
+            <button class="sitebtn" data-site="https://www.youtube.com">YouTube</button>
+            <button class="sitebtn" data-site="https://open.spotify.com">Spotify</button>
+            <button class="sitebtn" data-site="https://soundcloud.com">SoundCloud</button>
+          </div>
+          <div class="side-title" style="margin:14px 0 8px">Remote finesse</div>
+          <div class="row"><div class="grow"><div class="t">Playback speed</div><div class="d">Sets the site player's rate</div></div><input type="range" id="rgRate" min="25" max="200" value="100" style="max-width:110px"><span class="kbd" id="rateVal">1x</span></div>
+          <div class="row"><div class="grow"><div class="t">Poll speed</div><div class="d">How live the progress bar feels</div></div><select id="pollSel" style="height:32px;font-size:12px"><option value="500">Turbo 0.5s</option><option value="1000" selected>Normal 1s</option><option value="2000">Calm 2s</option></select></div>
+          <div class="side-title" style="margin:14px 0 8px">Nudge &amp; speed presets</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn ghost" data-nudge="-10" style="flex:1">-10s</button>
+            <button class="btn ghost" data-nudge="10" style="flex:1">+10s</button>
+            <button class="btn ghost" data-rate="0.5">0.5x</button>
+            <button class="btn ghost" data-rate="1">1x</button>
+            <button class="btn ghost" data-rate="1.5">1.5x</button>
+            <button class="btn ghost" data-rate="2">2x</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            <button class="btn ghost" data-vol="25" style="flex:1">25%</button>
+            <button class="btn ghost" data-vol="50" style="flex:1">50%</button>
+            <button class="btn ghost" data-vol="75" style="flex:1">75%</button>
+            <button class="btn ghost" data-vol="100" style="flex:1">100%</button>
+          </div>
+        </div>
+        <!-- TABS: full detection -->
+        <div class="side-pane" id="pane-tabs">
+          <div class="side-head"><span class="side-title">Full detection — every media tab</span>
+            <button class="btn ghost" id="btnTabsRefresh" style="height:30px;font-size:12px">Refresh</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="btn ghost" id="btnPauseAll" style="flex:1">Pause all</button>
+            <button class="btn ghost" id="btnMuteAll" style="flex:1">Mute all</button>
+            <button class="btn ghost" id="btnUnmuteAll" style="flex:1">Unmute</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="btn ghost" id="btnDeep" style="flex:1">Deep scan</button>
+            <button class="btn ghost" id="btnDups" style="flex:1">Close dups</button>
+            <button class="btn ghost" id="btnCloseOthers" style="flex:1">Close others</button>
+          </div>
+          <div class="side-title" style="margin:0 0 8px">Sounding now</div>
+          <div id="soundList"></div>
+          <div class="side-title" style="margin:12px 0 8px">Music sites standing by</div>
+          <div id="standbyList"></div>
+          <div class="empty" id="tabEmpty" hidden>
+            <div class="big-ic"><svg class="ic ic-lg" viewBox="0 0 24 24"><path d="M4 10v4h4l5 5V5L8 10z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></div>
+            <b>No media tabs found</b><br>Open YouTube Music (button above) and press play — full control appears here.
+          </div>
+        </div>
+        <!-- SONGS -->
+        <div class="side-pane" id="pane-songs">
+          <div class="side-head"><span class="side-title">Starred + history + notes</span>
+            <span style="display:flex;gap:4px">
+              <button class="btn ghost" id="btnSongsTxt" style="height:30px;font-size:12px">TXT</button>
+              <button class="btn ghost" id="btnSongsExport" style="height:30px;font-size:12px">Export</button>
+            </span>
+          </div>
+          <input type="text" id="songSearch" placeholder="Filter songs…" style="width:100%;margin-bottom:10px" autocomplete="off">
+          <div class="row"><div class="grow"><div class="t">Today</div><div class="d" id="goalInfo">0m of 60m goal</div></div></div>
+          <div style="height:8px;border-radius:99px;background:var(--surface-3);border:1px solid var(--border);overflow:hidden;margin:-2px 0 12px"><div id="goalBar" style="height:100%;width:0;background:var(--accent);border-radius:99px"></div></div>
+          <div class="side-title" style="margin:0 0 8px">Top played</div>
+          <div id="topList" style="margin-bottom:4px"></div>
+          <div class="side-title" style="margin:12px 0 8px">Starred</div>
+          <div id="favList"></div>
+          <div class="side-title" style="margin:12px 0 8px">History</div>
+          <div id="histList"></div>
+        </div>
+        <!-- TOOLS -->
+        <div class="side-pane" id="pane-tools">
+          <div class="side-head"><span class="side-title">Remote tools — free &amp; unlimited</span></div>
+          <div class="grid2" style="margin-bottom:8px">
+            <div class="stat"><b id="stCmds">0</b><span>commands sent</span></div>
+            <div class="stat"><b id="stTabs">0</b><span>sounding now</span></div>
+            <div class="stat"><b id="stSites">0</b><span>music tabs</span></div>
+            <div class="stat"><b id="stTracks">0</b><span>songs seen</span></div>
+          </div>
+          <div class="row"><div class="grow"><div class="t">Sleep timer</div><div class="d" id="sleepInfo">Pause the music after a while</div></div><select id="sleepSel" style="height:32px;font-size:12px"><option value="0">Off</option><option value="5">5 min</option><option value="15">15 min</option><option value="30">30 min</option><option value="60">60 min</option><option value="120">120 min</option></select></div>
+          <div class="row"><div class="grow"><div class="t">Duck on timer end</div><div class="d">Fade volume instead of hard pause</div></div><label class="sw"><input type="checkbox" id="duckSw"><span class="tr"></span></label></div>
+          <div class="row"><div class="grow"><div class="t">Single source</div><div class="d">New sounding tab pauses the rest</div></div><label class="sw"><input type="checkbox" id="singleSw"><span class="tr"></span></label></div>
+          <div class="row"><div class="grow"><div class="t">Song-change alerts</div><div class="d">OS notification per song</div></div><label class="sw"><input type="checkbox" id="notifSw"><span class="tr"></span></label></div>
+          <div class="row"><div class="grow"><div class="t">Stop after this song</div><div class="d">Pause when the track changes</div></div><label class="sw"><input type="checkbox" id="stopSw"><span class="tr"></span></label></div>
+          <div class="row"><div class="grow"><div class="t">Site volume memory</div><div class="d">Remember volume per site</div></div><label class="sw"><input type="checkbox" id="volMemSw"><span class="tr"></span></label></div>
+          <div class="row"><div class="grow"><div class="t">Fade-out timer</div><div class="d" id="fadeInfo">Gently fade volume, then pause</div></div><select id="fadeSel" style="height:32px;font-size:12px"><option value="0">Off</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="30">30 min</option></select></div>
+          <div class="row"><div class="grow"><div class="t">Focus 25m</div><div class="d" id="focusInfo">Pause now, auto-resume after</div></div><button class="btn ghost" id="btnFocus" style="height:32px">Start</button></div>
+          <div class="row"><div class="grow"><div class="t">Daily goal</div><div class="d">Minutes of music per day</div></div><input type="range" id="rgGoal" min="15" max="240" step="15" value="60" style="max-width:110px"><span class="kbd" id="goalVal">60m</span></div>
+          <div class="side-title" style="margin:14px 0 8px">Backup</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn ghost" id="btnExport" style="flex:1">Export prefs</button>
+            <button class="btn ghost" id="btnImport" style="flex:1">Import</button>
+            <button class="btn ghost" id="btnReset" style="flex:1">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player bar = the remote control -->
+  <div class="playerbar">
+    <div class="seek-row"><span id="tCur">0:00</span><input type="range" id="seek" min="0" max="1000" value="0"><span id="tDur">0:00</span></div>
+    <div class="ctrl-row">
+      <button class="ibtn" id="btnShuffle" title="Shuffle"><svg class="ic" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+      <button class="ibtn" id="btnPrev" title="Previous (←)"><svg class="ic ic-lg" viewBox="0 0 24 24"><path d="M19 20L9 12l10-8z"/><path d="M5 19V5"/></svg></button>
+      <button class="ibtn big" id="btnPlay" title="Play / Pause (Space)"><svg class="ic ic-lg" viewBox="0 0 24 24" id="playIcon"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="ibtn" id="btnNext" title="Next (→)"><svg class="ic ic-lg" viewBox="0 0 24 24"><path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/></svg></button>
+      <button class="ibtn" id="btnRepeat" title="Repeat"><svg class="ic" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
+    </div>
+    <div class="vol-row">
+      <button class="ibtn" id="btnMute" style="width:30px;height:30px" title="Mute tab (M)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10v4h4l5 5V5L8 10z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>
+      <input type="range" id="vol" min="0" max="100" value="100">
+      <button class="ibtn" id="btnLike" style="width:30px;height:30px" title="Like (L)"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21C7 16.5 3 13 3 8.8 3 6 5.2 4 7.8 4c1.7 0 3.2.9 4.2 2.3C13 4.9 14.5 4 16.2 4 18.8 4 21 6 21 8.8c0 4.2-4 7.7-9 12.2z"/></svg></button>
+      <button class="ibtn" id="btnDislike" style="width:30px;height:30px" title="Dislike"><svg class="ic" viewBox="0 0 24 24" style="transform:rotate(180deg)"><path d="M12 21C7 16.5 3 13 3 8.8 3 6 5.2 4 7.8 4c1.7 0 3.2.9 4.2 2.3C13 4.9 14.5 4 16.2 4 18.8 4 21 6 21 8.8c0 4.2-4 7.7-9 12.2z"/></svg></button>
+    </div>
+  </div>
+
+  <div class="statusbar"><span class="grow" id="status">Ready — panel remote, nothing leaves the device</span><span id="statMini"></span></div>
+</div>
+
+<input type="file" id="backupIn" accept="application/json" hidden>
+<div id="toasts"></div>
+<div id="modalRoot"></div>
+<script src="sidepanel.js"></script>
+</body>
+</html>

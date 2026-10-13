@@ -1,0 +1,35 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Required files exist
+        run: |
+          test -f heros-player-extension/manifest.json
+          test -f heros-player-extension/sidepanel.html
+          test -f heros-player-extension/sidepanel.js
+          test -f heros-player-extension/background.js
+          test -f CHANGELOG.md
+      - name: Manifest is valid JSON + MV3
+        run: |
+          python3 -c "import json;d=json.load(open('heros-player-extension/manifest.json'));assert d['manifest_version']==3, 'not MV3';assert 'side_panel' in d, 'no side_panel';print('manifest OK', d['version'])"
+      - name: Version matches CHANGELOG top entry
+        run: |
+          MV=$(python3 -c "import json;print(json.load(open('heros-player-extension/manifest.json'))['version'])")
+          grep -q "## \[$MV\]" CHANGELOG.md && echo "version $MV in sync" || (echo "manifest $MV not in CHANGELOG"; exit 1)
+      - name: No emojis in docs
+        run: |
+          ! grep -rPn "[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]" README.md docs/ CHANGELOG.md --include="*.md" | grep -v screenshots && echo "emoji check passed"
+      - name: JS parses (node)
+        run: |
+          node --check heros-player-extension/background.js
+          node -e "const vm=require('vm'),fs=require('fs');new vm.Script(fs.readFileSync('heros-player-extension/sidepanel.js','utf8'));console.log('sidepanel.js parses')"
+      - name: No network calls in extension
+        run: |
+          ! grep -rn "fetch(\|XMLHttpRequest" heros-player-extension/*.js && echo "no fetch/XHR"

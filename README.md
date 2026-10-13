@@ -9,7 +9,7 @@
 
 <br/>
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](./heros-player-extension/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](./heros-player-extension/manifest.json)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green?style=for-the-badge)](https://developer.chrome.com/docs/extensions/mv3/)
 [![Panel Only](https://img.shields.io/badge/panel-side_panel_only-8A2BE2?style=for-the-badge)](./heros-player-extension/sidepanel.html)
 [![100% Local](https://img.shields.io/badge/privacy-100%25%20local-success?style=for-the-badge&logo=shield&logoColor=white)](#privacy-and-security)
@@ -195,6 +195,7 @@ The printable checklist also lives in [`docs/FEATURES.md`](./docs/FEATURES.md).
 ### 2. Full control (per tab)
 - [x] Play/Pause (real site button first, media-element fallback)
 - [x] Up Next queue (read + jump on supported sites)
+- [x] Queue copy, seek-to `m:ss` prompt, Picture-in-Picture for video tabs
 - [x] Next / Previous (real site buttons — queues, autoplay, radios keep working)
 - [x] Seek to any second (drag the bar, ±10s nudge, arrow keys)
 - [x] Remote volume 0–100 (slider, arrows, 25/50/75/100 presets)
@@ -211,6 +212,8 @@ The printable checklist also lives in [`docs/FEATURES.md`](./docs/FEATURES.md).
 
 ### 4. Yours: songs, history, stats
 - [x] Star any song (`F`), per-song notes, Starred list with find/unstar
+- [x] Links export (playable search links), history clear that keeps stars
+- [x] Per-song play counts, all-time total, day streak
 - [x] 100-deep history with timestamp + site, JSON + TXT export
 - [x] Song filter search, Top-played auto ranking
 - [x] Listening time (total + today) with daily-goal progress bar
@@ -226,6 +229,7 @@ The printable checklist also lives in [`docs/FEATURES.md`](./docs/FEATURES.md).
 
 ### 6. Tab surgery + power
 - [x] Pause ALL / Mute ALL / Unmute ALL
+- [x] Mute others, reload-all music tabs, reopen closed tab
 - [x] Close others (keep controlled, with confirm), Close duplicates
 - [x] Command counter, songs-seen counter, sounding/sites stats
 - [x] Prefs export / import / reset
@@ -629,7 +633,8 @@ Long version: [`docs/USER_GUIDE.md`](./docs/USER_GUIDE.md).
 | ↑ / ↓ | Remote volume | N / P | Next / Previous |
 | M | Mute tab | L | Like (site) |
 | F | Star song | C | Copy song |
-| 1–4 | Switch panes | Esc | Blur input |
+| G | Go to tab | 1–5 | Switch panes |
+| Esc | Blur input | | |
 
 ---
 

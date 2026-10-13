@@ -240,7 +240,7 @@ body.compact .side-tab{height:42px}
           <div class="side-title" style="margin:14px 0 8px">Remote finesse</div>
           <div class="row"><div class="grow"><div class="t">Playback speed</div><div class="d">Sets the site player's rate</div></div><input type="range" id="rgRate" min="25" max="200" value="100" style="max-width:110px"><span class="kbd" id="rateVal">1x</span></div>
           <div class="row"><div class="grow"><div class="t">Poll speed</div><div class="d">How live the progress bar feels</div></div><select id="pollSel" style="height:32px;font-size:12px"><option value="500">Turbo 0.5s</option><option value="1000" selected>Normal 1s</option><option value="2000">Calm 2s</option></select></div>
-          <div class="side-title" style="margin:14px 0 8px">Up next</div>
+          <div class="side-head" style="margin:14px 0 8px"><span class="side-title">Up next</span><button class="btn ghost" id="btnQueueCopy" style="height:28px;font-size:11px">Copy</button></div>
           <div id="queueList"><div class="chip">Queue appears for supported sites</div></div>
           <div class="side-title" style="margin:14px 0 8px">Nudge &amp; speed presets</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -250,6 +250,8 @@ body.compact .side-tab{height:42px}
             <button class="btn ghost" data-rate="1">1x</button>
             <button class="btn ghost" data-rate="1.5">1.5x</button>
             <button class="btn ghost" data-rate="2">2x</button>
+            <button class="btn ghost" data-seekto="1">Go to…</button>
+            <button class="btn ghost" data-pip="1">PiP</button>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
             <button class="btn ghost" data-vol="25" style="flex:1">25%</button>
@@ -273,6 +275,11 @@ body.compact .side-tab{height:42px}
             <button class="btn ghost" id="btnDups" style="flex:1">Close dups</button>
             <button class="btn ghost" id="btnCloseOthers" style="flex:1">Close others</button>
           </div>
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="btn ghost" id="btnReloadAll" style="flex:1">Reload all</button>
+            <button class="btn ghost" id="btnMuteOthers" style="flex:1">Mute others</button>
+            <button class="btn ghost" id="btnReopen" style="flex:1">Reopen</button>
+          </div>
           <input type="text" id="tabSearch" placeholder="Filter tabs…" style="width:100%;margin-bottom:10px" autocomplete="off">
           <div class="side-title" style="margin:0 0 8px">Sounding now</div>
           <div id="soundList"></div>
@@ -287,7 +294,9 @@ body.compact .side-tab{height:42px}
         <div class="side-pane" id="pane-songs">
           <div class="side-head"><span class="side-title">Starred + history + notes</span>
             <span style="display:flex;gap:4px">
+              <button class="btn ghost" id="btnSongsLinks" style="height:30px;font-size:12px">Links</button>
               <button class="btn ghost" id="btnSongsTxt" style="height:30px;font-size:12px">TXT</button>
+              <button class="btn ghost" id="btnHistClear" style="height:30px;font-size:12px">Clear</button>
               <button class="btn ghost" id="btnSongsExport" style="height:30px;font-size:12px">Export</button>
             </span>
           </div>

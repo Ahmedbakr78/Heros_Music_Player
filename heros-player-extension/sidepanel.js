@@ -32,7 +32,7 @@ function isMusicUrl(url) {
 }
 
 /* ---------- 2. Prefs ---------- */
-const DEF = { theme: 'dark', accent: '#4c8dff', follow: true, pinnedId: null, pollMs: 1000, duck: false, cmds: 0, seen: 0, favs: {}, notes: {}, hist: [], secs: 0, day: '', todaySecs: 0, goalMin: 60, single: false, siteVols: {}, notif: false, stopAfter: false, volMem: false, compact: false };
+const DEF = { theme: 'dark', accent: '#4c8dff', follow: true, pinnedId: null, pollMs: 1000, duck: false, cmds: 0, seen: 0, favs: {}, notes: {}, hist: [], secs: 0, day: '', todaySecs: 0, goalMin: 60, single: false, siteVols: {}, notif: false, stopAfter: false, volMem: false, compact: false, streak: 1 };
 let P = { ...DEF };
 const store = {
   async get(k, fb) { try { const r = await chrome.storage.local.get(k); return r[k] ?? fb; } catch (_) { try { const v = localStorage.getItem('hp_' + k); return v ? JSON.parse(v) : fb; } catch (_) { return fb; } } },
@@ -157,9 +157,18 @@ function herosAct(action, value) {
     if (action === 'like') return clickBtn(/thumbs?\s*up|^like$/i);
     if (action === 'dislike') return clickBtn(/thumbs?\s*down|^dislike$/i);
     if (action === 'queueplay') {
-      var items = document.querySelectorAll('ytmusic-player-queue-item');
+      var items = Array.prototype.slice.call(document.querySelectorAll('ytmusic-player-queue-item'));
       if (items[value]) { items[value].click(); return true; }
       return false;
+    }
+    if (action === 'pip') {
+      var vv = document.querySelector('video');
+      if (!vv) return false;
+      try {
+        if (document.pictureInPictureElement) document.exitPictureInPicture();
+        else vv.requestPictureInPicture();
+        return true;
+      } catch (eP) { return false; }
     }
   } catch (e) { return false; }
   return false;
@@ -442,10 +451,12 @@ $('btnUnmuteAll').onclick = async () => {
 /* ---------- 6b. Songs: star, notes, history, deep scan, single-source ---------- */
 function setProgress(p) { const el = $('progress'); if (el) el.style.width = (p * 100).toFixed(0) + '%'; if (p >= 1) setTimeout(() => { el.style.width = '0'; }, 400); }
 function todayStr() { return new Date().toISOString().slice(0, 10); }
-function rollDay() { const d = todayStr(); if (P.day !== d) { P.day = d; P.todaySecs = 0; } }
+function rollDay() { const d = todayStr(); if (P.day !== d) { P.streak = (P.todaySecs > 0) ? (P.streak || 1) + 1 : 1; P.day = d; P.todaySecs = 0; } }
 function updateGoal() {
   const m = Math.floor(P.todaySecs / 60);
-  $('goalInfo').textContent = m + 'm of ' + P.goalMin + 'm goal';
+  const tm = Math.floor(P.secs / 60);
+  const tall = tm >= 60 ? Math.floor(tm / 60) + 'h' + (tm % 60) + 'm' : tm + 'm';
+  $('goalInfo').textContent = m + 'm of ' + P.goalMin + 'm goal · ' + tall + ' all-time' + (P.streak > 1 ? ' · ' + P.streak + '-day streak' : '');
   $('goalBar').style.width = Math.min(100, Math.round((m / P.goalMin) * 100)) + '%';
 }
 function songKey() { return lastProbe && lastProbe.title ? (lastProbe.title + '::' + (lastProbe.artist || '')) : ''; }
@@ -492,6 +503,17 @@ $('pane-control').addEventListener('click', (e) => {
   if (n && lastProbe && lastProbe.duration) { act('seek', Math.max(0, Math.min(lastProbe.duration - 0.5, lastProbe.currentTime + (+n.dataset.nudge)))); return; }
   const r = e.target.closest('button[data-rate]');
   if (r) { act('rate', +r.dataset.rate); $('rgRate').value = (+r.dataset.rate) * 100; $('rateVal').textContent = r.dataset.rate + 'x'; return; }
+  const sk = e.target.closest('button[data-seekto]');
+  if (sk) {
+    modalPrompt('Go to time', 'm:ss — e.g. 1:23', (v) => {
+      const m = String(v || '').trim().match(/^(?:(\d+):)?(\d{1,3})$/);
+      if (!m || !lastProbe || !lastProbe.duration) { toast('Enter m:ss'); return; }
+      act('seek', Math.max(0, Math.min(lastProbe.duration - 0.5, (+(m[1] || 0)) * 60 + (+m[2]))));
+    });
+    return;
+  }
+  const pp = e.target.closest('button[data-pip]');
+  if (pp) { act('pip').then((ok) => { if (!ok) toast('No video on this tab'); }); return; }
   const v = e.target.closest('button[data-vol]');
   if (v) { $('vol').value = v.dataset.vol; $('vol').onchange({ target: $('vol') }); }
 });
@@ -499,10 +521,17 @@ $('cover').style.cursor = 'pointer';
 $('cover').onclick = async () => { const id = await resolveTarget(); if (id != null) tabRowAction(id, 'goto'); };
 function renderQueue(st) {
   const q = (st && st.queue) || [];
+  lastQueue = q.slice(0, 8);
   $('queueList').innerHTML = q.length ? q.slice(0, 8).map((it, i) =>
     '<div class="row' + (it.playing ? ' active' : '') + '" data-qidx="' + i + '"><div class="grow"><div class="t">' + esc(it.t) + '</div><div class="d">' + esc(it.a || siteLabel(st.site)) + '</div></div></div>'
   ).join('') : '<div class="chip">Queue appears for supported sites (YouTube Music)</div>';
 }
+let lastQueue = [];
+$('btnQueueCopy').onclick = () => {
+  if (!lastQueue.length) { toast('No queue right now'); return; }
+  const s = lastQueue.map((it, i) => (i + 1) + '. ' + it.t + (it.a ? ' — ' + it.a : '')).join('\n');
+  try { navigator.clipboard.writeText(s).then(() => toast('Queue copied')); } catch (_) {}
+};
 $('queueList').addEventListener('click', async (e) => {
   const r = e.target.closest('.row[data-qidx]'); if (!r) return;
   const ok = await act('queueplay', +r.dataset.qidx);
@@ -530,7 +559,7 @@ function renderSongs() {
     '<button class="ibtn" data-fact="unstar" data-k="' + esc(f.k) + '" title="Unstar" style="width:30px;height:30px"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
   ).join('') : '<div class="chip">Star any song — it lives here forever</div>';
   $('histList').innerHTML = P.hist.filter((h) => match(h.title, h.artist)).slice(0, 50).map((h) =>
-    '<div class="row"><div class="grow"><div class="t">' + esc(h.title) + '</div><div class="d">' + new Date(h.at).toLocaleTimeString() + ' · ' + esc([h.artist, h.site].filter(Boolean).join(' · ')) + '</div></div>' +
+    '<div class="row"><div class="grow"><div class="t">' + esc(h.title) + '</div><div class="d">' + new Date(h.at).toLocaleTimeString() + ' · ' + esc([h.artist, h.site].filter(Boolean).join(' · ')) + ' · ' + ((counts[h.title + '::' + (h.artist || '')] || {}).n || 1) + 'x</div></div>' +
     '<button class="ibtn" data-hfind="' + esc(h.title + ' ' + (h.artist || '')) + '" title="Find it" style="width:30px;height:30px"><svg class="ic ic-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button></div>'
   ).join('') || '<div class="chip">Every detected song lands here</div>';
 }
@@ -543,6 +572,19 @@ $('btnSongsTxt').onclick = () => {
   const lines = P.hist.map((h) => new Date(h.at).toLocaleString() + ' — ' + h.title + (h.artist ? ' — ' + h.artist : '') + ' [' + h.site + ']');
   dl(new Blob([lines.join('\n') || 'No history yet'], { type: 'text/plain' }), 'heros-player-history.txt');
   toast('History exported as TXT');
+};
+$('btnSongsLinks').onclick = () => {
+  const favs = Object.values(P.favs);
+  if (!favs.length) { toast('Star songs first (F)'); return; }
+  const lines = favs.map((f) => f.title + (f.artist ? ' — ' + f.artist : '') + '\nhttps://music.youtube.com/search?q=' + encodeURIComponent(f.title + ' ' + (f.artist || '')));
+  dl(new Blob([lines.join('\n\n')], { type: 'text/plain' }), 'heros-player-starred-links.txt');
+  toast('Starred links exported');
+};
+$('btnHistClear').onclick = () => {
+  if (!P.hist.length) { toast('History empty'); return; }
+  modal('<h3>Clear history?</h3><p style="color:var(--muted);font-size:13px">Removes all detected-song history on this device. Stars stay.</p><div style="display:flex;gap:8px"><button class="btn accent" id="hcYes" style="flex:1">Clear</button><button class="btn ghost" id="hcNo" style="flex:1">Keep</button></div>');
+  $('hcNo').onclick = closeModal;
+  $('hcYes').onclick = () => { P.hist = []; savePrefs(); closeModal(); renderSongs(); toast('History cleared'); };
 };
 $('favList').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
@@ -592,6 +634,29 @@ $('btnDups').onclick = async () => {
   for (const t of dups) { try { await chrome.tabs.remove(t.id); } catch (_) {} }
   toast('Closed ' + dups.length + ' duplicate(s)');
   refreshRadar(); pollOnce();
+};
+$('btnMuteOthers').onclick = async () => {
+  const id = await resolveTarget();
+  let all = []; try { all = await chrome.tabs.query({}); } catch (_) { return; }
+  let n = 0;
+  for (const t of all) { if (t.id !== id && t.audible && !(t.mutedInfo && t.mutedInfo.muted)) { try { await chrome.tabs.update(t.id, { muted: true }); n++; } catch (_) {} } }
+  toast(n ? 'Muted ' + n + ' other(s)' : 'Nothing else sounding');
+  refreshRadar();
+};
+$('btnReloadAll').onclick = async () => {
+  let all = []; try { all = await chrome.tabs.query({}); } catch (_) { return; }
+  let n = 0;
+  for (const t of all) { if (t.audible || isMusicUrl(t.url || '')) { try { await chrome.tabs.reload(t.id); n++; } catch (_) {} } }
+  toast(n ? 'Reloaded ' + n + ' tab(s)' : 'No music tabs');
+  setTimeout(() => { refreshRadar(); pollOnce(); }, 1500);
+};
+$('btnReopen').onclick = async () => {
+  try {
+    if (!chrome.sessions) { toast('Reload the extension to enable this'); return; }
+    const s = await chrome.sessions.restore();
+    if (s && (s.tab || s.window)) { toast('Tab reopened'); setTimeout(() => { refreshRadar(); pollOnce(); }, 800); }
+    else toast('Nothing to reopen');
+  } catch (_) { toast('Sessions blocked'); }
 };
 /* Close every other music/sounding tab */
 $('btnCloseOthers').onclick = async () => {
@@ -782,14 +847,17 @@ const FX = [
     ['Speed', '0.25x–2x slider + 0.5/1/1.5/2 presets'],
     ['Shuffle · Repeat · Likes', 'Live pressed-state from the site'],
     ['Up Next queue', 'See and jump the site queue from the panel'],
+    ['Seek-to + PiP', 'Jump to m:ss, pop video overlay'],
     ['Pin + Follow', 'Lock a tab or chase whatever sounds'],
   ]],
   ['SONGS', [
     ['Starred (F)', 'Kept forever, find again, unstar per row'],
     ['History (100)', 'Time + site per song, JSON + TXT export'],
     ['Top played', 'Auto top-5 ranking'],
-    ['Listening + goal', 'Total + today minutes vs daily goal'],
+    ['Listening + goal', 'Total + today minutes vs daily goal, day streak'],
     ['Copy (C)', 'Title — Artist to clipboard'],
+    ['Links export', 'Starred songs as playable links'],
+    ['Clear history', 'One-tap wipe, stars stay'],
   ]],
   ['CALM', [
     ['Sleep timer', 'Pause or duck-fade after 5–120 min'],
@@ -802,6 +870,8 @@ const FX = [
   ]],
   ['SURGERY', [
     ['Pause / Mute all', 'One-tap browser silence'],
+    ['Mute others', 'Silence everything but controlled'],
+    ['Reload all + Reopen', 'Refresh glitchy players, undo a close'],
     ['Close others / dups', 'One-tap tab cleanup'],
     ['Pin / Reload tab', 'Surgery on the target card'],
     ['Quick launch', 'YTM, YouTube, Spotify, SoundCloud'],
@@ -845,7 +915,7 @@ $('btnMenu').onclick = () => {
     if (k === 'follow') { P.follow = !P.follow; $('followSw').checked = P.follow; savePrefs(); closeMenu(); pollOnce(); }
     if (k === 'keys') {
       modal('<h3>Keyboard shortcuts</h3><div style="display:grid;gap:7px;font-size:13px">' +
-        [['Space', 'Play / Pause remote'], ['ArrowRight / Left', 'Seek ±10s'], ['ArrowUp / Down', 'Remote volume'], ['N / P', 'Next / Previous'], ['M', 'Mute tab'], ['L', 'Like (site)'], ['F', 'Star song (kept)'], ['C', 'Copy song'], ['1–5', 'Switch panes']].map((x) => '<div style="display:flex;justify-content:space-between"><span>' + x[0] + '</span><span class="kbd">' + x[1] + '</span></div>').join('') +
+        [['Space', 'Play / Pause remote'], ['ArrowRight / Left', 'Seek ±10s'], ['ArrowUp / Down', 'Remote volume'], ['N / P', 'Next / Previous'], ['M', 'Mute tab'], ['L', 'Like (site)'], ['F', 'Star song (kept)'], ['C', 'Copy song'], ['G', 'Go to tab'], ['1–5', 'Switch panes']].map((x) => '<div style="display:flex;justify-content:space-between"><span>' + x[0] + '</span><span class="kbd">' + x[1] + '</span></div>').join('') +
         '</div><button class="btn accent" id="keysOk" style="width:100%;margin-top:12px">Done</button>');
       $('keysOk').onclick = closeModal;
     }
@@ -870,6 +940,7 @@ window.addEventListener('keydown', (e) => {
   else if (k === 'l' || k === 'L') act('like');
   else if (k === 'f' || k === 'F') toggleStar();
   else if (k === 'c' || k === 'C') copySong();
+  else if (k === 'g' || k === 'G') (async () => { const id = await resolveTarget(); if (id != null) tabRowAction(id, 'goto'); })();
   else if (k >= '1' && k <= '5') switchPane(['control', 'tabs', 'songs', 'tools', 'features'][+k - 1]);
 });
 

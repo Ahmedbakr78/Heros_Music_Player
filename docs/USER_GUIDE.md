@@ -7,7 +7,8 @@
 - **Follow switch** — on: the panel chases whatever is sounding. Off + Control
   button on a radar row: that tab is pinned forever.
 - **Quick launch** — one tap opens YouTube Music, YouTube, Spotify, SoundCloud.
-- **Nudge & presets** — ±10s jumps, 0.5x–2x speed, 25–100% volume.
+- **Nudge & presets** — ±10s jumps, 0.5x–2x speed, 25–100% volume, Go-to `m:ss` prompt, PiP for video tabs.
+- **Up next** — the site queue with tap-to-jump + Copy button.
 - **Poll speed** — Turbo 0.5s (live progress), Normal 1s, Calm 2s (quieter CPU).
 
 ## 2. The player bar (the remote itself)
@@ -29,7 +30,8 @@ Click the **cover art** to jump to the tab. Full keyboard map:
 | L | Like (site) |
 | F | Star song (kept in Songs) |
 | C | Copy `Title — Artist` |
-| 1–4 | Control / Tabs / Songs / Tools |
+| G | Go to the controlled tab |
+| 1–5 | Control / Tabs / Songs / Tools / More |
 
 ## 3. Tabs pane (the radar)
 
@@ -39,13 +41,17 @@ Click the **cover art** to jump to the tab. Full keyboard map:
 - **Pause all / Mute all / Unmute** — one-tap browser silence.
 - **Deep scan** — probes all tabs for hidden players, with a progress bar.
 - **Close others / Close dups** — keep it tidy in one tap.
+- **Reload all / Mute others / Reopen** — refresh glitchy players, silence
+  everything but controlled, undo a tab close.
+- **Filter box** — instant search across sounding + standby.
 
 ## 4. Songs pane (yours, forever)
 
 - **Today bar** — listening minutes vs your daily goal (Tools → Daily goal).
 - **Top played** — auto top-5 from history, each with a Find button.
 - **Starred** — `F` on any song; find it again or unstar per row.
-- **History** — last 100 detected songs with time + site; TXT/JSON export.
+- **History** — last 100 detected songs with time + site and per-song play
+  counts; TXT/JSON export, one-tap clear (stars stay).
 - **Filter box** — instant search across starred + history.
 
 ## 5. Tools pane (calm + power)

@@ -4,6 +4,22 @@ All notable changes to Heros Player. Versions follow SemVer. The manifest
 version, the top entry here, and the release tag must always agree (CI fails
 if they do not).
 
+## [1.3.0] - 2026-10-13
+
+### Added
+- Up Next extras: one-tap queue copy to clipboard.
+- Seek-to prompt (`Go to…`): jump to any `m:ss` in the song.
+- Picture-in-Picture toggle for video tabs.
+- Mute-others (silence everything but the controlled tab).
+- Reload-all music tabs for glitchy players.
+- Reopen closed tab (new `sessions` permission).
+- History rows show per-song play counts; Today row shows all-time total.
+- Day streak counter for listening days.
+- Starred-links export (playable YouTube Music search links).
+- History clear with confirm (stars stay).
+- `G` jumps to the controlled tab.
+- In-app More list documents every new item.
+
 ## [1.2.0] - 2026-10-13
 
 ### Fixed

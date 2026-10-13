@@ -11,7 +11,8 @@ Pure remote. No local files. Full YouTube Music (& co.) detection + control.
 
 ## Full control
 - [x] Play / Pause remote (real site button, media fallback)
-- [x] Up Next queue (read + tap-to-jump on supported sites)
+- [x] Up Next queue (read + tap-to-jump + copy)
+- [x] Seek-to `m:ss` prompt + Picture-in-Picture for video
 - [x] Next / Previous (real site buttons — queues keep working)
 - [x] Live seek bar with drag-to-jump
 - [x] Remote volume slider + tab mute
@@ -28,6 +29,7 @@ Pure remote. No local files. Full YouTube Music (& co.) detection + control.
 - [x] Single-source mode (newcomer pauses the rest)
 - [x] Deep scan (uncovers hidden media tabs)
 - [x] Close others + Close duplicates
+- [x] Mute others + Reload all + Reopen closed tab
 - [x] Pin / unpin player tab, Reload stuck player
 - [x] Song-change OS notifications with Play/Next buttons
 - [x] Compact mode for tiny panels
@@ -39,7 +41,9 @@ Pure remote. No local files. Full YouTube Music (& co.) detection + control.
 
 ## Songs (yours, forever)
 - [x] Star any song (F shortcut) + one-tap Find from lists
-- [x] Full 100-song history with time + site, JSON + TXT export
+- [x] Full 100-song history with time + site + play counts, JSON + TXT export, one-tap clear
+- [x] Listening time (total + today + day streak) with daily goal bar
+- [x] Starred-links export (playable search links)
 - [x] Song filter search + Top-played ranking
 - [x] Listening time (total + today) with daily goal bar
 - [x] Copy "Title — Artist" to clipboard

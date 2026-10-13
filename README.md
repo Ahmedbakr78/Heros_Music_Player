@@ -22,6 +22,7 @@
 [![Edge](https://img.shields.io/badge/Edge-supported-0078D7?style=flat-square&logo=microsoftedge&logoColor=white)](#installation--30-seconds)
 [![Brave](https://img.shields.io/badge/Brave-supported-FB542B?style=flat-square&logo=brave&logoColor=white)](#installation--30-seconds)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](./LICENSE)
+[![By: Ahmed ABOBAKR](https://img.shields.io/badge/by-Ahmed_ABOBAKR-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ahmed-abo-bakr-1b2466288/)
 
 **Website:** `https://ahmedbakr78.github.io/Heros_Music_Player/`  |  **Extension folder:** [`heros-player-extension/`](./heros-player-extension/)  |  **Issues:** [Report a bug](https://github.com/Ahmedbakr78/Heros_Music_Player/issues/new/choose)  |  **Feature request:** [Request it](https://github.com/Ahmedbakr78/Heros_Music_Player/issues/new/choose)
 
@@ -142,8 +143,9 @@ Heros Player is the opposite:
 
 ## Demo / How it looks
 
-> Screenshots live in `docs/screenshots/` (drop real captures with the same
-> names — the website picks them up automatically).
+> Real captures of the panel in dark theme. Shots live in `docs/screenshots/`
+> (regenerate with `python3 /tmp/opencode/shots.py`, or replace 1:1 with
+> captures from your own panel — same names).
 
 | Control (remote hero + player bar) | Tabs (radar + standby) |
 |---|---|
@@ -958,7 +960,7 @@ automatically via Pages.
 
 MIT — see [`LICENSE`](./LICENSE). Free forever, unlimited everything.
 
-- Author: **Ahmed ABOBAKR (Ahmedbakr78)**
+- Author: **Ahmed ABOBAKR (Ahmedbakr78)** — [LinkedIn](https://www.linkedin.com/in/ahmed-abo-bakr-1b2466288/)
 - Design language mirrored from **Heros PDF** (same author, MIT) — sources never modified.
 - Built with vanilla web tech: no frameworks, no bundlers, no servers.
 - Thanks to every tester who pressed play.

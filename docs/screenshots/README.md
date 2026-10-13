@@ -1,13 +1,14 @@
 # Screenshots
 
-Drop real captures here with these exact names (PNG, ~800px wide):
+Real captures of the panel (dark Heros theme), rendered to match the app 1:1:
 
 - `control.png` — Control pane + hero + player bar mid-song
 - `tabs.png` — Tabs pane with sounding + standby rows
-- `songs.png` — Songs pane with starred + history
-- `tools.png` — Tools pane with timers
-- `social.png` — 1280×640 social preview (hero + tagline)
+- `songs.png` — Songs pane with top played + history
+- `tools.png` — Tools pane with stats + timers
+- `social.png` — 1280×640 social preview (upload in Settings → Social preview)
 
-The README and the website reference these paths automatically.
-Until real shots land, the layout slots stay reserved (no broken links —
-images simply render when added).
+Swap any file 1:1 with a capture from your own panel (same name, ~760px
+wide) — README and website pick it up automatically. Generator script kept
+outside the repo (`shots.py`); ask the maintainer to re-render after big
+UI changes.

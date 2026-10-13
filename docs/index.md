@@ -46,3 +46,5 @@ git clone https://github.com/Ahmedbakr78/Heros_Music_Player.git
 Or grab the packaged zip from
 [Releases](https://github.com/Ahmedbakr78/Heros_Music_Player/releases).
 Free forever. No account. No tracking.
+
+Made by [Ahmed ABOBAKR](https://www.linkedin.com/in/ahmed-abo-bakr-1b2466288/) — MIT open source.

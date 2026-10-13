@@ -4,6 +4,23 @@ All notable changes to Heros Player. Versions follow SemVer. The manifest
 version, the top entry here, and the release tag must always agree (CI fails
 if they do not).
 
+## [1.2.0] - 2026-10-13
+
+### Fixed
+- Cover art no longer shows a broken "cover" tile: the probe now returns the
+  player image separately, `blob:` artwork (unloadable across contexts) is
+  rejected, the letter cover sits behind the image, and alt text is empty.
+
+### Added
+- In-app feature universe is back: new **More** pane with the full grouped,
+  free-and-unlimited list (Detect / Control / Songs / Calm / Surgery).
+- **Up Next queue** — reads the site queue (YouTube Music) into Control,
+  tap any row to jump.
+- **Song-alert buttons** — OS notification carries Play/Pause + Next; clicking
+  it jumps to the tab.
+- **Tab filter** — instant search across radar + standby.
+- **Compact mode** — shrunk hero for tiny panels (Tools toggle, persisted).
+
 ## [1.1.1] - 2026-10-13
 
 ### Fixed

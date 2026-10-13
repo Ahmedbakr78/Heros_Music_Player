@@ -32,7 +32,7 @@ function isMusicUrl(url) {
 }
 
 /* ---------- 2. Prefs ---------- */
-const DEF = { theme: 'dark', accent: '#4c8dff', follow: true, pinnedId: null, pollMs: 1000, duck: false, cmds: 0, seen: 0, favs: {}, notes: {}, hist: [], secs: 0, day: '', todaySecs: 0, goalMin: 60, single: false, siteVols: {}, notif: false, stopAfter: false, volMem: false };
+const DEF = { theme: 'dark', accent: '#4c8dff', follow: true, pinnedId: null, pollMs: 1000, duck: false, cmds: 0, seen: 0, favs: {}, notes: {}, hist: [], secs: 0, day: '', todaySecs: 0, goalMin: 60, single: false, siteVols: {}, notif: false, stopAfter: false, volMem: false, compact: false };
 let P = { ...DEF };
 const store = {
   async get(k, fb) { try { const r = await chrome.storage.local.get(k); return r[k] ?? fb; } catch (_) { try { const v = localStorage.getItem('hp_' + k); return v ? JSON.parse(v) : fb; } catch (_) { return fb; } } },
@@ -43,7 +43,7 @@ function chromeOK() { try { return !!(chrome && chrome.tabs && chrome.tabs.query
 
 /* ---------- 3. Injected probe + act (self-contained: no outer refs) ---------- */
 function herosProbe() {
-  var out = { hasMedia: false, playing: false, title: '', artist: '', album: '', artwork: '', duration: 0, currentTime: 0, volume: 1, muted: false, rate: 1, hasNext: false, hasPrev: false, shuffle: null, repeat: null, like: null, dislike: null, site: location.hostname };
+  var out = { hasMedia: false, playing: false, title: '', artist: '', album: '', artwork: '', artDom: '', queue: [], duration: 0, currentTime: 0, volume: 1, muted: false, rate: 1, hasNext: false, hasPrev: false, shuffle: null, repeat: null, like: null, dislike: null, site: location.hostname };
   try {
     var els = Array.prototype.slice.call(document.querySelectorAll('audio,video'));
     var m = null;
@@ -74,7 +74,14 @@ function herosProbe() {
         if (!out.album && parts[1]) out.album = parts[1];
       }
       var img = document.querySelector('.image.style-scope.ytmusic-player-bar');
-      if (img && img.src && img.src.indexOf('data:') !== 0) out.artwork = img.src;
+      if (img && img.src) out.artDom = img.src;
+      try {
+        var ql = document.querySelectorAll('ytmusic-player-queue-item');
+        for (var qi = 0; qi < ql.length && qi < 20; qi++) {
+          var lines = (ql[qi].innerText || '').split('\n').map(function (s) { return s.trim(); }).filter(function (s) { return s && !/^\d+:\d+$/.test(s); });
+          if (lines.length) out.queue.push({ t: lines[0].slice(0, 80), a: (lines[1] || '').slice(0, 80), playing: !!ql[qi].hasAttribute('playing') });
+        }
+      } catch (eQ) {}
     } catch (e2) {}
     if (!out.title) {
       var dt = (document.title || '').replace(/\s*-\s*YouTube Music\s*$/i, '').replace(/\s*-\s*YouTube\s*$/i, '').trim();
@@ -149,6 +156,11 @@ function herosAct(action, value) {
     if (action === 'repeat') return clickBtn(/^repeat/i);
     if (action === 'like') return clickBtn(/thumbs?\s*up|^like$/i);
     if (action === 'dislike') return clickBtn(/thumbs?\s*down|^dislike$/i);
+    if (action === 'queueplay') {
+      var items = document.querySelectorAll('ytmusic-player-queue-item');
+      if (items[value]) { items[value].click(); return true; }
+      return false;
+    }
   } catch (e) { return false; }
   return false;
 }
@@ -244,6 +256,7 @@ async function pollOnce() {
     renderHero(st);
     syncSongCard();
     renderSongs();
+    renderQueue(st);
     if (st.title) notifyTrack(st);
     if (P.stopAfter && had && st.title) {
       P.stopAfter = false; $('stopSw').checked = false; savePrefs();
@@ -255,16 +268,26 @@ async function pollOnce() {
 function notifyTrack(st) {
   if (!P.notif || !st.title) return;
   try {
-    chrome.notifications.create({ type: 'basic', iconUrl: 'icons/icon128.png', title: st.title.slice(0, 80), message: ([st.artist, siteLabel(st.site)].filter(Boolean).join(' · ') || 'Now playing').slice(0, 120), priority: 0, silent: true });
+    lastNotifTab = controlledId;
+    chrome.notifications.create({ type: 'basic', iconUrl: 'icons/icon128.png', title: st.title.slice(0, 80), message: ([st.artist, siteLabel(st.site)].filter(Boolean).join(' · ') || 'Now playing').slice(0, 120), priority: 0, silent: true, buttons: [{ title: 'Play / Pause' }, { title: 'Next song' }] });
   } catch (_) {}
+}
+let lastNotifTab = null;
+function pickArt(st) {
+  const ok = (u) => u && (u.indexOf('http') === 0 || u.indexOf('data:') === 0);
+  if (ok(st.artDom)) return st.artDom;
+  if (ok(st.artwork)) return st.artwork;
+  return '';
 }
 function renderHero(st) {
   const has = !!(st.title || st.hasMedia);
   $('npTitle').textContent = st.title || (st.hasMedia ? 'Playing media' : 'Nothing detected');
   $('npArtist').textContent = [st.artist, st.album].filter(Boolean).join(' · ') || (has ? siteLabel(st.site) : 'Open YouTube Music and press play');
   const cv = $('cover');
-  if (st.artwork) cv.innerHTML = '<img src="' + esc(st.artwork) + '" alt="cover" onerror="this.remove()">';
-  else { cv.innerHTML = '<span id="coverLetter">' + esc(((st.title || 'H')[0] || 'H').toUpperCase()) + '</span>'; }
+  const letter = esc(((st.title || 'H')[0] || 'H').toUpperCase());
+  const art = pickArt(st);
+  if (art) cv.innerHTML = '<span id="coverLetter">' + letter + '</span><img src="' + esc(art) + '" alt="" style="position:absolute;inset:0" onerror="this.remove()">';
+  else cv.innerHTML = '<span id="coverLetter">' + letter + '</span>';
   $('chipSrc').textContent = siteLabel(st.site);
   const cs = $('chipState');
   if (has) { cs.hidden = false; cs.textContent = st.playing ? 'Playing' : 'Paused'; }
@@ -353,14 +376,15 @@ async function refreshRadar() {
       '<button class="ibtn" data-tact="goto" title="Go to tab" style="width:32px;height:32px"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></button>' +
       '</div>';
   };
-  $('soundList').innerHTML = aud.length
-    ? aud.map((t) => rowHtml(t, states[t.id] || 'sounding', (t.mutedInfo && t.mutedInfo.muted) ? 'muted' : '', true)).join('')
+  const fa = aud.filter(tabMatch);
+  $('soundList').innerHTML = fa.length
+    ? fa.map((t) => rowHtml(t, states[t.id] || 'sounding', (t.mutedInfo && t.mutedInfo.muted) ? 'muted' : '', true)).join('')
     : '<div class="chip">Quiet — nothing is sounding</div>';
   const standbyBase = musicTabs.filter((t) => !aud.some((a) => a.id === t.id));
   for (const t of deepTabs) {
     if (!aud.some((a) => a.id === t.id) && !standbyBase.some((s) => s.id === t.id)) standbyBase.push(t);
   }
-  const standby = standbyBase;
+  const standby = standbyBase.filter(tabMatch);
   $('standbyList').innerHTML = standby.length
     ? standby.map((t) => rowHtml(t, 'standing by', 'idle', false)).join('')
     : '<div class="chip">No music sites open — launch one from Control</div>';
@@ -473,6 +497,17 @@ $('pane-control').addEventListener('click', (e) => {
 });
 $('cover').style.cursor = 'pointer';
 $('cover').onclick = async () => { const id = await resolveTarget(); if (id != null) tabRowAction(id, 'goto'); };
+function renderQueue(st) {
+  const q = (st && st.queue) || [];
+  $('queueList').innerHTML = q.length ? q.slice(0, 8).map((it, i) =>
+    '<div class="row' + (it.playing ? ' active' : '') + '" data-qidx="' + i + '"><div class="grow"><div class="t">' + esc(it.t) + '</div><div class="d">' + esc(it.a || siteLabel(st.site)) + '</div></div></div>'
+  ).join('') : '<div class="chip">Queue appears for supported sites (YouTube Music)</div>';
+}
+$('queueList').addEventListener('click', async (e) => {
+  const r = e.target.closest('.row[data-qidx]'); if (!r) return;
+  const ok = await act('queueplay', +r.dataset.qidx);
+  if (!ok) toast('Queue jump blocked here');
+});
 function renderSongs() {
   updateGoal();
   const q = (($('songSearch') && $('songSearch').value) || '').toLowerCase().trim();
@@ -525,6 +560,9 @@ $('btnSongsExport').onclick = () => {
 };
 /* Deep scan: probe every tab for hidden media */
 let deepTabs = [];
+let tabFilter = '';
+$('tabSearch').oninput = debounce(() => { tabFilter = ($('tabSearch').value || '').toLowerCase().trim(); refreshRadar(); }, 300);
+function tabMatch(t) { return !tabFilter || (((t.title || '') + ' ' + hostOf(t.url || '')).toLowerCase().includes(tabFilter)); }
 $('btnDeep').onclick = async () => {
   if (!chromeOK()) return;
   toast('Deep scanning tabs…');
@@ -669,6 +707,7 @@ $('singleSw').onchange = (e) => { P.single = e.target.checked; savePrefs(); toas
 $('notifSw').onchange = (e) => { P.notif = e.target.checked; savePrefs(); toast('Song alerts ' + (P.notif ? 'on' : 'off')); if (P.notif && lastProbe && lastProbe.title) notifyTrack(lastProbe); };
 $('stopSw').onchange = (e) => { P.stopAfter = e.target.checked; savePrefs(); toast('Stop after song ' + (P.stopAfter ? 'armed' : 'off')); };
 $('volMemSw').onchange = (e) => { P.volMem = e.target.checked; savePrefs(); toast('Site volume memory ' + (P.volMem ? 'on' : 'off')); };
+$('compSw').onchange = (e) => { P.compact = e.target.checked; document.body.classList.toggle('compact', P.compact); savePrefs(); };
 /* Fade-out timer */
 let fadeUntil = 0, fadeTotal = 0, fadeStartVol = 1;
 $('fadeSel').onchange = async (e) => {
@@ -727,7 +766,56 @@ $('btnReset').onclick = () => {
   applyPrefs(); savePrefs(); pollOnce(); refreshRadar(); toast('Reset done');
 };
 
-/* ---------- 9. Panes, menu, modal ---------- */
+/* ---------- 9. Features pane (in-app universe list) ---------- */
+const FX = [
+  ['DETECT', [
+    ['Sounding radar', 'Every audible tab, live state, badge + chip counts'],
+    ['Music standby', 'YTM, YouTube, Spotify, SoundCloud + 7 more, always listed'],
+    ['Deep scan', 'Probes all tabs for hidden players, with progress'],
+    ['Tab filter', 'Instant search across radar + standby'],
+  ]],
+  ['CONTROL', [
+    ['Play / Pause', 'Real site button, media fallback — Space'],
+    ['Next / Previous', 'Queues and radios keep flowing — N / P'],
+    ['Live seek', 'Drag-to-jump, ±10s nudge, arrow keys'],
+    ['Volume + mute', 'Slider, arrows, 25–100% presets, tab + site mute'],
+    ['Speed', '0.25x–2x slider + 0.5/1/1.5/2 presets'],
+    ['Shuffle · Repeat · Likes', 'Live pressed-state from the site'],
+    ['Up Next queue', 'See and jump the site queue from the panel'],
+    ['Pin + Follow', 'Lock a tab or chase whatever sounds'],
+  ]],
+  ['SONGS', [
+    ['Starred (F)', 'Kept forever, find again, unstar per row'],
+    ['History (100)', 'Time + site per song, JSON + TXT export'],
+    ['Top played', 'Auto top-5 ranking'],
+    ['Listening + goal', 'Total + today minutes vs daily goal'],
+    ['Copy (C)', 'Title — Artist to clipboard'],
+  ]],
+  ['CALM', [
+    ['Sleep timer', 'Pause or duck-fade after 5–120 min'],
+    ['Fade-out', 'Volume glides to zero over 5–30 min'],
+    ['Focus 25m', 'Silence now, auto-resume after'],
+    ['Stop after song', 'One-shot pause on track change'],
+    ['Single source', 'Newcomers auto-pause'],
+    ['Song alerts', 'OS notification with Play/Next buttons'],
+    ['Volume memory', 'Per-site volume auto-restore'],
+  ]],
+  ['SURGERY', [
+    ['Pause / Mute all', 'One-tap browser silence'],
+    ['Close others / dups', 'One-tap tab cleanup'],
+    ['Pin / Reload tab', 'Surgery on the target card'],
+    ['Quick launch', 'YTM, YouTube, Spotify, SoundCloud'],
+    ['Compact mode', 'Shrunk hero for tiny panels'],
+  ]],
+];
+function renderFeat() {
+  $('featList').innerHTML = FX.map(([g, items]) =>
+    '<div class="side-title" style="margin:12px 0 6px">' + g + '</div>' +
+    items.map(([b, s]) => '<div class="fx"><span class="tick"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>' + esc(b) + '</b><span>' + esc(s) + '</span></div></div>').join('')
+  ).join('');
+}
+
+/* ---------- 10. Panes, menu, modal ---------- */
 function switchPane(name) {
   document.querySelectorAll('.side-tab').forEach((b) => b.classList.toggle('active', b.dataset.pane === name));
   document.querySelectorAll('.side-pane').forEach((p) => p.classList.toggle('active', p.id === 'pane-' + name));
@@ -757,7 +845,7 @@ $('btnMenu').onclick = () => {
     if (k === 'follow') { P.follow = !P.follow; $('followSw').checked = P.follow; savePrefs(); closeMenu(); pollOnce(); }
     if (k === 'keys') {
       modal('<h3>Keyboard shortcuts</h3><div style="display:grid;gap:7px;font-size:13px">' +
-        [['Space', 'Play / Pause remote'], ['ArrowRight / Left', 'Seek ±10s'], ['ArrowUp / Down', 'Remote volume'], ['N / P', 'Next / Previous'], ['M', 'Mute tab'], ['L', 'Like (site)'], ['F', 'Star song (kept)'], ['C', 'Copy song'], ['1–4', 'Switch panes']].map((x) => '<div style="display:flex;justify-content:space-between"><span>' + x[0] + '</span><span class="kbd">' + x[1] + '</span></div>').join('') +
+        [['Space', 'Play / Pause remote'], ['ArrowRight / Left', 'Seek ±10s'], ['ArrowUp / Down', 'Remote volume'], ['N / P', 'Next / Previous'], ['M', 'Mute tab'], ['L', 'Like (site)'], ['F', 'Star song (kept)'], ['C', 'Copy song'], ['1–5', 'Switch panes']].map((x) => '<div style="display:flex;justify-content:space-between"><span>' + x[0] + '</span><span class="kbd">' + x[1] + '</span></div>').join('') +
         '</div><button class="btn accent" id="keysOk" style="width:100%;margin-top:12px">Done</button>');
       $('keysOk').onclick = closeModal;
     }
@@ -782,7 +870,7 @@ window.addEventListener('keydown', (e) => {
   else if (k === 'l' || k === 'L') act('like');
   else if (k === 'f' || k === 'F') toggleStar();
   else if (k === 'c' || k === 'C') copySong();
-  else if (k >= '1' && k <= '4') switchPane(['control', 'tabs', 'songs', 'tools'][+k - 1]);
+  else if (k >= '1' && k <= '5') switchPane(['control', 'tabs', 'songs', 'tools', 'features'][+k - 1]);
 });
 
 /* ---------- theme ---------- */
@@ -803,6 +891,8 @@ function applyPrefs() {
   $('notifSw').checked = !!P.notif;
   $('stopSw').checked = !!P.stopAfter;
   $('volMemSw').checked = !!P.volMem;
+  $('compSw').checked = !!P.compact;
+  document.body.classList.toggle('compact', !!P.compact);
   $('stCmds').textContent = P.cmds;
   $('stTracks').textContent = P.seen;
   $('rgGoal').value = P.goalMin; $('goalVal').textContent = P.goalMin + 'm';
@@ -819,6 +909,7 @@ async function boot() {
   const t0 = performance.now();
   try { const p = await store.get('prefs', null); if (p) P = { ...DEF, ...p }; } catch (_) {}
   applyPrefs();
+  renderFeat();
   document.body.classList.remove('boot');
   await refreshRadar();
   await pollOnce();
@@ -830,6 +921,8 @@ async function boot() {
     chrome.tabs.onRemoved.addListener(debounce(() => { refreshRadar(); pollOnce(); }, 900));
   } catch (_) {}
   try { chrome.runtime.onMessage.addListener((m) => { if (m && m.type === 'heros-toggle') act('toggle'); }); } catch (_) {}
+  try { chrome.notifications.onButtonClicked.addListener((nid, bi) => { if (bi === 0) act('toggle'); else act('next'); }); } catch (_) {}
+  try { chrome.notifications.onClicked.addListener(() => { if (lastNotifTab != null) tabRowAction(lastNotifTab, 'goto'); }); } catch (_) {}
   setStatus('Ready — remote live (' + Math.round(performance.now() - t0) + 'ms boot)');
 }
 async function refreshRadarLite() {

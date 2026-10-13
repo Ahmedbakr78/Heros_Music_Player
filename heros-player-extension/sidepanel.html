@@ -139,6 +139,15 @@ select:focus,input:focus{border-color:var(--accent)}
 .tr::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .sw input:checked + .tr{background:var(--accent)}
 .sw input:checked + .tr::after{transform:translateX(16px)}
+.fx{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:var(--r-sm)}
+.fx .tick{width:20px;height:20px;border-radius:7px;background:rgba(34,197,94,.16);color:var(--ok);display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
+.fx b{font-size:12.5px;display:block}
+.fx span{font-size:11.5px;color:var(--muted)}
+body.compact .hero{padding:8px}
+body.compact .cover{width:52px;height:52px;border-radius:12px;font-size:22px}
+body.compact .hero-title{font-size:13px}
+body.compact .hero-badges{display:none}
+body.compact .side-tab{height:42px}
 /* ---------- Player bar (floating card = the remote) ---------- */
 .playerbar{margin:10px 12px 0;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:10px 12px 12px;position:relative;z-index:30}
 .seek-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -207,6 +216,7 @@ select:focus,input:focus{border-color:var(--accent)}
     <button class="side-tab" data-pane="tabs" role="tab"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2"/></svg>Tabs</button>
     <button class="side-tab" data-pane="songs" role="tab"><svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Songs</button>
     <button class="side-tab" data-pane="tools" role="tab"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.07-.4.1-.8.1-1.2z"/></svg>Tools</button>
+    <button class="side-tab" data-pane="features" role="tab"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>More</button>
   </div>
 
   <!-- Main card -->
@@ -230,6 +240,8 @@ select:focus,input:focus{border-color:var(--accent)}
           <div class="side-title" style="margin:14px 0 8px">Remote finesse</div>
           <div class="row"><div class="grow"><div class="t">Playback speed</div><div class="d">Sets the site player's rate</div></div><input type="range" id="rgRate" min="25" max="200" value="100" style="max-width:110px"><span class="kbd" id="rateVal">1x</span></div>
           <div class="row"><div class="grow"><div class="t">Poll speed</div><div class="d">How live the progress bar feels</div></div><select id="pollSel" style="height:32px;font-size:12px"><option value="500">Turbo 0.5s</option><option value="1000" selected>Normal 1s</option><option value="2000">Calm 2s</option></select></div>
+          <div class="side-title" style="margin:14px 0 8px">Up next</div>
+          <div id="queueList"><div class="chip">Queue appears for supported sites</div></div>
           <div class="side-title" style="margin:14px 0 8px">Nudge &amp; speed presets</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn ghost" data-nudge="-10" style="flex:1">-10s</button>
@@ -261,6 +273,7 @@ select:focus,input:focus{border-color:var(--accent)}
             <button class="btn ghost" id="btnDups" style="flex:1">Close dups</button>
             <button class="btn ghost" id="btnCloseOthers" style="flex:1">Close others</button>
           </div>
+          <input type="text" id="tabSearch" placeholder="Filter tabs…" style="width:100%;margin-bottom:10px" autocomplete="off">
           <div class="side-title" style="margin:0 0 8px">Sounding now</div>
           <div id="soundList"></div>
           <div class="side-title" style="margin:12px 0 8px">Music sites standing by</div>
@@ -306,12 +319,18 @@ select:focus,input:focus{border-color:var(--accent)}
           <div class="row"><div class="grow"><div class="t">Fade-out timer</div><div class="d" id="fadeInfo">Gently fade volume, then pause</div></div><select id="fadeSel" style="height:32px;font-size:12px"><option value="0">Off</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="30">30 min</option></select></div>
           <div class="row"><div class="grow"><div class="t">Focus 25m</div><div class="d" id="focusInfo">Pause now, auto-resume after</div></div><button class="btn ghost" id="btnFocus" style="height:32px">Start</button></div>
           <div class="row"><div class="grow"><div class="t">Daily goal</div><div class="d">Minutes of music per day</div></div><input type="range" id="rgGoal" min="15" max="240" step="15" value="60" style="max-width:110px"><span class="kbd" id="goalVal">60m</span></div>
+          <div class="row"><div class="grow"><div class="t">Compact mode</div><div class="d">Shrink hero for tiny panels</div></div><label class="sw"><input type="checkbox" id="compSw"><span class="tr"></span></label></div>
           <div class="side-title" style="margin:14px 0 8px">Backup</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn ghost" id="btnExport" style="flex:1">Export prefs</button>
             <button class="btn ghost" id="btnImport" style="flex:1">Import</button>
             <button class="btn ghost" id="btnReset" style="flex:1">Reset</button>
           </div>
+        </div>
+        <!-- FEATURES -->
+        <div class="side-pane" id="pane-features">
+          <div class="side-head"><span class="side-title">Everything — free &amp; unlimited</span></div>
+          <div id="featList"></div>
         </div>
       </div>
     </div>

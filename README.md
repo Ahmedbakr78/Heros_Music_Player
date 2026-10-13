@@ -9,7 +9,7 @@
 
 <br/>
 
-[![Version](https://img.shields.io/badge/version-1.1.1-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](./heros-player-extension/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge&logo=googlechrome&logoColor=white)](./heros-player-extension/manifest.json)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green?style=for-the-badge)](https://developer.chrome.com/docs/extensions/mv3/)
 [![Panel Only](https://img.shields.io/badge/panel-side_panel_only-8A2BE2?style=for-the-badge)](./heros-player-extension/sidepanel.html)
 [![100% Local](https://img.shields.io/badge/privacy-100%25%20local-success?style=for-the-badge&logo=shield&logoColor=white)](#privacy-and-security)
@@ -164,7 +164,7 @@ Heros Player is the opposite:
 +---------------------------------------------------------------+
 | Hero (floating card): cover + title + artist + site chips     |
 +---------------------------------------------------------------+
-| Pill tabs: [Control] [Tabs] [Songs] [Tools]                   |
+| Pill tabs: [Control] [Tabs] [Songs] [Tools] [More]              |
 +---------------------------------------------------------------+
 | +-----------------------------------------------------------+ |
 | | Card pane: target card / radar rows / songs / timers      | |
@@ -187,11 +187,14 @@ The printable checklist also lives in [`docs/FEATURES.md`](./docs/FEATURES.md).
 - [x] Every `audible` tab found live (event-driven + 4s refresh + lite sync)
 - [x] Music-site standby: YouTube Music, YouTube, Spotify, SoundCloud, Apple Music, Deezer, Tidal, Bandcamp, Pandora, Audiomack, Mixcloud
 - [x] Deep scan: probes up to 60 tabs for hidden `<audio>/<video>` players, with progress bar
+- [x] Tab filter: instant search across radar + standby
+- [x] In-app universe: **More** pane lists every feature, grouped, with zero paywalls
 - [x] Per-tab state: playing / paused / sounding / muted / standing by
 - [x] Toolbar badge + header chip with sounding-tab count
 
 ### 2. Full control (per tab)
 - [x] Play/Pause (real site button first, media-element fallback)
+- [x] Up Next queue (read + jump on supported sites)
 - [x] Next / Previous (real site buttons — queues, autoplay, radios keep working)
 - [x] Seek to any second (drag the bar, ±10s nudge, arrow keys)
 - [x] Remote volume 0–100 (slider, arrows, 25/50/75/100 presets)
@@ -219,13 +222,14 @@ The printable checklist also lives in [`docs/FEATURES.md`](./docs/FEATURES.md).
 - [x] Focus 25m (pause now, auto-resume after)
 - [x] Stop-after-this-song (auto-pause on track change)
 - [x] Single-source mode (a newly sounding tab pauses the rest)
-- [x] Song-change OS notifications (toggleable)
+- [x] Song-change OS notifications with Play/Next buttons (toggleable)
 
 ### 6. Tab surgery + power
 - [x] Pause ALL / Mute ALL / Unmute ALL
 - [x] Close others (keep controlled, with confirm), Close duplicates
 - [x] Command counter, songs-seen counter, sounding/sites stats
 - [x] Prefs export / import / reset
+- [x] Compact mode for tiny panels
 
 ### 7. Free power — no limits
 - [x] No accounts, no paywall, no "pro remote", no daily quota

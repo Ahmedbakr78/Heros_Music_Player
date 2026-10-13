@@ -4,12 +4,14 @@ Pure remote. No local files. Full YouTube Music (& co.) detection + control.
 
 ## Full detection
 - [x] Every sounding tab, live (event-driven + auto-refresh)
+- [x] Tab filter search across radar + standby
 - [x] Music sites on standby: YouTube Music, YouTube, Spotify, SoundCloud, Apple Music, Deezer, Tidal, Bandcamp, Pandora, Audiomack, Mixcloud
 - [x] Per-tab state: playing / paused / sounding / muted / standing by
 - [x] Header chip + toolbar badge sounding count
 
 ## Full control
 - [x] Play / Pause remote (real site button, media fallback)
+- [x] Up Next queue (read + tap-to-jump on supported sites)
 - [x] Next / Previous (real site buttons — queues keep working)
 - [x] Live seek bar with drag-to-jump
 - [x] Remote volume slider + tab mute
@@ -27,7 +29,9 @@ Pure remote. No local files. Full YouTube Music (& co.) detection + control.
 - [x] Deep scan (uncovers hidden media tabs)
 - [x] Close others + Close duplicates
 - [x] Pin / unpin player tab, Reload stuck player
-- [x] Song-change OS notifications
+- [x] Song-change OS notifications with Play/Next buttons
+- [x] Compact mode for tiny panels
+- [x] In-app universe list (More pane) — every feature below lives there too
 - [x] Site volume memory (per-site volume auto-restore)
 - [x] Quick launch: YouTube Music, YouTube, Spotify, SoundCloud
 - [x] Command stats + songs-seen counter

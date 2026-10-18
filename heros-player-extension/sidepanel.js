@@ -18,6 +18,16 @@ function toast(msg, ms = 2600) {
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 250); }, ms);
 }
 function setStatus(s) { $('status').textContent = s; }
+/* CSP-safe image fallback: MV3 extension pages block inline on* handlers
+   (e.g. onerror="..."), so tag imgs with data-fb and bind via addEventListener. */
+function bindImgFallbacks(root) {
+  try {
+    root.querySelectorAll('img[data-fb]').forEach((im) => {
+      im.removeAttribute('data-fb');
+      im.addEventListener('error', () => im.remove(), { once: true });
+    });
+  } catch (_) {}
+}
 function hostOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (_) { return ''; } }
 const SITE_LABEL = {
   'music.youtube.com': 'YouTube Music', 'youtube.com': 'YouTube',
@@ -295,8 +305,9 @@ function renderHero(st) {
   const cv = $('cover');
   const letter = esc(((st.title || 'H')[0] || 'H').toUpperCase());
   const art = pickArt(st);
-  if (art) cv.innerHTML = '<span id="coverLetter">' + letter + '</span><img src="' + esc(art) + '" alt="" style="position:absolute;inset:0" onerror="this.remove()">';
+  if (art) cv.innerHTML = '<span id="coverLetter">' + letter + '</span><img src="' + esc(art) + '" alt="" style="position:absolute;inset:0" data-fb="1">';
   else cv.innerHTML = '<span id="coverLetter">' + letter + '</span>';
+  bindImgFallbacks(cv);
   $('chipSrc').textContent = siteLabel(st.site);
   const cs = $('chipState');
   if (has) { cs.hidden = false; cs.textContent = st.playing ? 'Playing' : 'Paused'; }
@@ -338,7 +349,7 @@ async function renderTarget() {
     const t = await chrome.tabs.get(controlledId);
     const h = hostOf(t.url || '');
     box.innerHTML = '<div class="row active">' +
-      (t.favIconUrl ? '<img class="fav" style="background:none" src="' + esc(t.favIconUrl) + '" onerror="this.remove()">' : '<div class="fav">♪</div>') +
+      (t.favIconUrl ? '<img class="fav" style="background:none" src="' + esc(t.favIconUrl) + '" data-fb="1" alt="">' : '<div class="fav">♪</div>') +
       '<div class="grow"><div class="t">' + esc(siteLabel(h)) + '</div><div class="d">' + esc((t.title || '').slice(0, 80)) + '</div></div>' +
       (P.pinnedId === controlledId ? '<span class="chip">Pinned</span>' : '') +
       '</div>' +
@@ -347,6 +358,7 @@ async function renderTarget() {
       '<button class="btn ghost" data-t2="reload" style="flex:1;height:32px;font-size:12px">Reload</button>' +
       '<button class="btn ghost" data-t2="mutesite" style="flex:1;height:32px;font-size:12px">Mute site</button>' +
       '</div>';
+    bindImgFallbacks(box);
     $('statMini').textContent = siteLabel(h);
   } catch (_) { box.innerHTML = ''; }
 }
@@ -377,7 +389,7 @@ async function refreshRadar() {
     const h = hostOf(t.url || '');
     return '<div class="row' + (t.id === controlledId ? ' active' : '') + '" data-tab="' + t.id + '">' +
       '<span class="tabdot ' + dotCls + '"></span>' +
-      (t.favIconUrl ? '<img class="fav" style="background:none" src="' + esc(t.favIconUrl) + '" onerror="this.remove()">' : '<div class="fav">♪</div>') +
+      (t.favIconUrl ? '<img class="fav" style="background:none" src="' + esc(t.favIconUrl) + '" data-fb="1" alt="">' : '<div class="fav">♪</div>') +
       '<div class="grow"><div class="t">' + esc((t.title || 'Untitled').slice(0, 70)) + '</div><div class="d">' + esc(h) + ' · ' + sub + '</div></div>' +
       (showPlay ? '<button class="ibtn" data-tact="toggle" title="Play/Pause" style="width:32px;height:32px"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="' + (sub === 'playing' ? 'M7 5h4v14H7zM13 5h4v14h-4z' : 'M8 5v14l11-7z') + '"/></svg></button>' : '') +
       '<button class="ibtn" data-tact="control" title="Control this tab" style="width:32px;height:32px"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>' +
@@ -389,6 +401,7 @@ async function refreshRadar() {
   $('soundList').innerHTML = fa.length
     ? fa.map((t) => rowHtml(t, states[t.id] || 'sounding', (t.mutedInfo && t.mutedInfo.muted) ? 'muted' : '', true)).join('')
     : '<div class="chip">Quiet — nothing is sounding</div>';
+  bindImgFallbacks($('soundList'));
   const standbyBase = musicTabs.filter((t) => !aud.some((a) => a.id === t.id));
   for (const t of deepTabs) {
     if (!aud.some((a) => a.id === t.id) && !standbyBase.some((s) => s.id === t.id)) standbyBase.push(t);
@@ -397,6 +410,7 @@ async function refreshRadar() {
   $('standbyList').innerHTML = standby.length
     ? standby.map((t) => rowHtml(t, 'standing by', 'idle', false)).join('')
     : '<div class="chip">No music sites open — launch one from Control</div>';
+  bindImgFallbacks($('standbyList'));
   $('tabEmpty').hidden = (aud.length + musicTabs.length) > 0;
 }
 async function tabRowAction(id, tact) {
@@ -515,7 +529,13 @@ $('pane-control').addEventListener('click', (e) => {
   const pp = e.target.closest('button[data-pip]');
   if (pp) { act('pip').then((ok) => { if (!ok) toast('No video on this tab'); }); return; }
   const v = e.target.closest('button[data-vol]');
-  if (v) { $('vol').value = v.dataset.vol; $('vol').onchange({ target: $('vol') }); }
+  if (v) {
+    const slider = $('vol');
+    slider.value = v.dataset.vol;
+    const val = (+slider.value) / 100;
+    if (lastProbe && lastProbe.site) { P.siteVols[lastProbe.site] = val; savePrefs(); }
+    act('volume', val);
+  }
 });
 $('cover').style.cursor = 'pointer';
 $('cover').onclick = async () => { const id = await resolveTarget(); if (id != null) tabRowAction(id, 'goto'); };
@@ -894,6 +914,20 @@ function switchPane(name) {
 document.querySelectorAll('.side-tab').forEach((b) => { b.onclick = () => switchPane(b.dataset.pane); });
 function modal(html) { $('modalRoot').innerHTML = '<div class="modal-bg" id="mbg"><div class="modal">' + html + '</div></div>'; $('mbg').onclick = (e) => { if (e.target.id === 'mbg') closeModal(); }; }
 function closeModal() { $('modalRoot').innerHTML = ''; }
+function modalPrompt(title, placeholder, cb) {
+  modal('<h3>' + esc(title) + '</h3>' +
+    '<input type="text" id="mpIn" placeholder="' + esc(placeholder) + '" style="width:100%" autocomplete="off">' +
+    '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn accent" id="mpOk" style="flex:1">Go</button>' +
+    '<button class="btn ghost" id="mpCancel" style="flex:1">Cancel</button></div>');
+  const inp = $('mpIn');
+  const done = () => { const v = inp ? inp.value : ''; closeModal(); try { cb(v); } catch (_) {} };
+  $('mpOk').onclick = done;
+  $('mpCancel').onclick = closeModal;
+  if (inp) {
+    inp.focus();
+    inp.onkeydown = (e) => { if (e.key === 'Enter') done(); if (e.key === 'Escape') closeModal(); e.stopPropagation(); };
+  }
+}
 function closeMenu() { const m = $('ctxmenu'); if (m) m.remove(); }
 const ACCENTS = ['#4c8dff', '#22c55e', '#f59e0b', '#ef4444', '#8A2BE2', '#14b8a6'];
 $('btnMenu').onclick = () => {
